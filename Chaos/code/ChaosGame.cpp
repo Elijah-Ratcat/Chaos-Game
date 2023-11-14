@@ -26,6 +26,12 @@ int main()
     vector<Vector2f> vertices;
     vector<Vector2f> points;
 
+    //For handling a right click and creation of shape
+    bool create = false;
+    bool outShape = false;
+
+    int last_vertex = 0;
+
     // Loading font
     Font font;
     if (!font.loadFromFile(font_name))
@@ -36,16 +42,15 @@ int main()
     // Setting text element
     Text text;
     text.setFont(font);
-    text.setString("Click any 3 points to form a triangle");
+    text.setString("    Click any 3+ points to form a shape");
     text.setCharacterSize(100);
     text.setFillColor(sf::Color::White);
 
     // Setting triangle
-    ConvexShape triangle;
-    triangle.setPointCount(3);
-    triangle.setOutlineColor(Color::White);
-    triangle.setOutlineThickness(1);
-    triangle.setFillColor(Color::Transparent);
+    ConvexShape shape;
+    shape.setOutlineColor(Color::White);
+    shape.setOutlineThickness(1);
+    shape.setFillColor(Color::Transparent);
 
 
 	while (window.isOpen())
@@ -71,10 +76,9 @@ int main()
                     std::cout << "mouse x: " << event.mouseButton.x << std::endl;
                     std::cout << "mouse y: " << event.mouseButton.y << std::endl;
 
-                    if(vertices.size() < 3)
+                    if(!create)
                     {
                         vertices.push_back(Vector2f(event.mouseButton.x, event.mouseButton.y));
-                        triangle.setPoint(vertices.size() - 1, Vector2f(event.mouseButton.x, event.mouseButton.y));
                     }
                     else if(points.size() == 0)
                     {
@@ -84,7 +88,12 @@ int main()
                     }
                 }
             }
+            else if (event.mouseButton.button == sf::Mouse::Right)
+            {
+                if (vertices.size() >= 3) create = true;
+            }
         }
+
         if (Keyboard::isKeyPressed(Keyboard::Escape))
 		{
 			window.close();
@@ -95,15 +104,40 @@ int main()
 		****************************************
 		*/
 
-        if(points.size() > 0)
+        if(vertices.size() >= 3 && !outShape) text.setString("continue adding points or right click to set shape");
+        else if(outShape) text.setString("click any point inside the shape to start the Chaos Game");
+
+        //create shape
+        if (create && !outShape)
         {
-            for (int i = 0; i < 10; i++)
+            shape.setPointCount(vertices.size());
+            for (int point = 0; point < vertices.size(); point++)
+            {
+                shape.setPoint(point, vertices[point]);
+            }
+            outShape = true;
+        }
+
+        if(points.size() > 0) //active first click after right click
+        {
+            for (int i = 0; i < 10; i++) // Generate points 10 times a frame for speed
             {
                 ///generate more point(s)
                 ///select random vertex
                 ///calculate midpoint between random vertex and the last point in the vector
                 ///push back the newly generated coord.
-                int random_vertex = rand() % 3;
+                
+                int random_vertex = rand() % vertices.size();
+
+                if (vertices.size() > 3) //adding no sequential repeat restriction to make interesting shapes on 4+ count shpaes
+                {
+                    while (random_vertex == last_vertex)    
+                    {
+                        random_vertex = rand() % vertices.size();
+                    }
+                    last_vertex = random_vertex;
+                }
+
                 int midpointX = (vertices[random_vertex].x + points.back().x) / 2;
                 int midpointY = (vertices[random_vertex].y + points.back().y) / 2;
                 points.push_back(Vector2f(midpointX, midpointY));
@@ -116,11 +150,12 @@ int main()
 		****************************************
 		*/
         window.clear();
+        srand(0);
         for(int i = 0; i < points.size(); i++)
         {
             RectangleShape rect(Vector2f(1,1));
             rect.setPosition(Vector2f(points[i].x, points[i].y));
-            rect.setFillColor(Color::White);
+            rect.setFillColor(Color(rand() % 256, rand() % 256, rand() % 256, 255));
             window.draw(rect);
         }
 
@@ -133,7 +168,7 @@ int main()
         }
 
         window.draw(text);
-        if (vertices.size() == 3) window.draw(triangle);
+        if (outShape) window.draw(shape);
         window.display();
     }
 }
