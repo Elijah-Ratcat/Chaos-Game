@@ -26,30 +26,30 @@ int main()
     vector<Vector2f> vertices;
     vector<Vector2f> points;
 
-    //For handling a right click and creation of shape
+    // For handling a right click, and creating shape once
     bool create = false;
     bool outShape = false;
-
+    // For restricting the point chooser algortihm to not use the same point twice in a row later, without it no fractals on higher poly
     int last_vertex = 0;
 
     // Loading font
     Font font;
     if (!font.loadFromFile(font_name))
     {
-        cout << "Error laoding " << font_name << endl; // error...
+        cout << "Error loading " << font_name << endl; // error...
     }
 
     // Setting text element
     Text text;
     text.setFont(font);
-    text.setString("    Click any 3+ points to form a shape");
+    text.setString("left-click 3+ points to form a shape");
     text.setCharacterSize(100);
     text.setFillColor(sf::Color::White);
 
-    // Setting triangle
+    // Setting shape cosmetic parameters
     ConvexShape shape;
     shape.setOutlineColor(Color::White);
-    shape.setOutlineThickness(1);
+    shape.setOutlineThickness(2);
     shape.setFillColor(Color::Transparent);
 
 
@@ -76,22 +76,34 @@ int main()
                     std::cout << "mouse x: " << event.mouseButton.x << std::endl;
                     std::cout << "mouse y: " << event.mouseButton.y << std::endl;
 
-                    if(!create)
+                    if(!create) //path shuts off after right right click
                     {
                         vertices.push_back(Vector2f(event.mouseButton.x, event.mouseButton.y));
                     }
-                    else if(points.size() == 0)
+                    else if(points.size() == 0) //accepts only initial point click
                     {
-                        ///fourth click
                         ///push back to points vector
                         points.push_back(Vector2f(event.mouseButton.x, event.mouseButton.y));
                     }
                 }
+                else if (event.mouseButton.button == sf::Mouse::Right)
+                {
+                    std::cout << "the right button was pressed" << std::endl;
+                    if (vertices.size() >= 3) // set right-click activated after 3+ points
+                    {
+                        create = true;
+                    }
+                    if (outShape && vertices.size() > 1) // reset all variables
+                    {
+                        text.setString("left-click 3+ points to form a shape");
+                        vertices.clear();
+                        points.clear();
+                        create = false;
+                        outShape = false;
+                    }
+                }
             }
-            else if (event.mouseButton.button == sf::Mouse::Right)
-            {
-                if (vertices.size() >= 3) create = true;
-            }
+            
         }
 
         if (Keyboard::isKeyPressed(Keyboard::Escape))
@@ -104,18 +116,19 @@ int main()
 		****************************************
 		*/
 
-        if(vertices.size() >= 3 && !outShape) text.setString("continue adding points or right click to set shape");
-        else if(outShape) text.setString("click any point inside the shape to start the Chaos Game");
+        if(vertices.size() >= 3 && !outShape) text.setString("add more points or right-click to set shape");
+        else if(outShape && points.size() == 0) text.setString("left-click inside the shape to start the Chaos");
+        else if(outShape) text.setString("  right-click to reset");
 
         //create shape
         if (create && !outShape)
         {
-            shape.setPointCount(vertices.size());
-            for (int point = 0; point < vertices.size(); point++)
+            shape.setPointCount(vertices.size()); // set number of points
+            for (int point = 0; point < vertices.size(); point++) // apply all point coodinates
             {
                 shape.setPoint(point, vertices[point]);
             }
-            outShape = true;
+            outShape = true; //confirms shape is made so is not remade every loop
         }
 
         if(points.size() > 0) //active first click after right click
@@ -127,17 +140,18 @@ int main()
                 ///calculate midpoint between random vertex and the last point in the vector
                 ///push back the newly generated coord.
                 
-                int random_vertex = rand() % vertices.size();
+                int random_vertex = rand() % vertices.size(); // picks a random vertex
 
-                if (vertices.size() > 3) //adding no sequential repeat restriction to make interesting shapes on 4+ count shpaes
+                if (vertices.size() > 3) // for shapes with 3 or more points add a restriction on vertex selection
                 {
-                    while (random_vertex == last_vertex)    
+                    while (random_vertex == last_vertex) // next vertex cannot be the same as the last vertex
                     {
                         random_vertex = rand() % vertices.size();
                     }
                     last_vertex = random_vertex;
                 }
 
+                // mid point algorithm
                 int midpointX = (vertices[random_vertex].x + points.back().x) / 2;
                 int midpointY = (vertices[random_vertex].y + points.back().y) / 2;
                 points.push_back(Vector2f(midpointX, midpointY));
@@ -150,16 +164,16 @@ int main()
 		****************************************
 		*/
         window.clear();
-        srand(0);
-        for(int i = 0; i < points.size(); i++)
+        srand(0); // seed is set so rainbow dots are the same, without seed shimmers,
+        for(int i = 0; i < points.size(); i++) //draw all dots
         {
             RectangleShape rect(Vector2f(1,1));
             rect.setPosition(Vector2f(points[i].x, points[i].y));
-            rect.setFillColor(Color(rand() % 256, rand() % 256, rand() % 256, 255));
+            rect.setFillColor(Color(rand() % 256, rand() % 256, rand() % 256, 255)); // rainbow dots
             window.draw(rect);
         }
 
-        for (int i = 0; i < vertices.size(); i++)
+        for (int i = 0; i < vertices.size(); i++) //draw verticies
         {
             RectangleShape rect(Vector2f(5, 5));
             rect.setPosition(Vector2f(vertices[i].x, vertices[i].y));
@@ -168,7 +182,7 @@ int main()
         }
 
         window.draw(text);
-        if (outShape) window.draw(shape);
+        if (outShape) window.draw(shape); //only draw the shape if it is created
         window.display();
     }
 }
