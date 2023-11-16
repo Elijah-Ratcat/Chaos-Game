@@ -115,7 +115,8 @@ int main()
 		Update
 		****************************************
 		*/
-
+        int numVert = vertices.size();
+        int numPoints = points.size();
         if(vertices.size() >= 3 && !outShape) text.setString("add more points or right-click to set shape");
         else if(outShape && points.size() == 0) text.setString("left-click inside the shape to start the Chaos");
         else if(outShape) text.setString("  right-click to reset");
@@ -124,9 +125,9 @@ int main()
         if (create && !outShape)
         {
             shape.setPointCount(vertices.size()); // set number of points
-            for (int point = 0; point < vertices.size(); point++) // apply all point coodinates
+            for (int i = 0; i < numVert; i++) // apply all point coodinates
             {
-                shape.setPoint(point, vertices[point]);
+                shape.setPoint(i, vertices[i]);
             }
             outShape = true; //confirms shape is made so is not remade every loop
         }
@@ -165,7 +166,7 @@ int main()
 		*/
         window.clear();
         srand(0); // seed is set so rainbow dots are the same, without seed shimmers,
-        for(int i = 0; i < points.size(); i++) //draw all dots
+        for(int i = 0; i < numPoints; i++) //draw all dots
         {
             RectangleShape rect(Vector2f(1,1));
             rect.setPosition(Vector2f(points[i].x, points[i].y));
@@ -173,7 +174,7 @@ int main()
             window.draw(rect);
         }
 
-        for (int i = 0; i < vertices.size(); i++) //draw verticies
+        for (int i = 0; i < numVert; i++) //draw verticies
         {
             RectangleShape rect(Vector2f(5, 5));
             rect.setPosition(Vector2f(vertices[i].x, vertices[i].y));
